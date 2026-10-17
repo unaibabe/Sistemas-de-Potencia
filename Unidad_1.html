@@ -1,0 +1,2028 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas de Potencia UF1 - Laboratorio Interactivo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0f19;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        /* Animación de flujo de corriente */
+        @keyframes flowRight {
+            0% {
+                stroke-dashoffset: 24;
+            }
+
+            100% {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes flowLeft {
+            0% {
+                stroke-dashoffset: 0;
+            }
+
+            100% {
+                stroke-dashoffset: 24;
+            }
+        }
+
+        .electron-flow-conv {
+            stroke-dasharray: 6 6;
+            animation: flowRight var(--flow-speed, 1s) linear infinite;
+        }
+
+        .electron-flow-real {
+            stroke-dasharray: 6 6;
+            animation: flowLeft var(--flow-speed, 1s) linear infinite;
+        }
+
+        .glow-amber {
+            filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5));
+        }
+
+        .glow-cyan {
+            filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.5));
+        }
+
+        .glow-red {
+            filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.6));
+        }
+
+        /* Estilizado de barras de desplazamiento */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        input[type=range] {
+            accent-color: #3b82f6;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col selection:bg-blue-500 selection:text-white">
+
+    <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between py-3 gap-3">
+                <div class="flex items-center gap-3">
+                    <div
+                        class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-lg shadow-blue-500/20">
+                        <i class="ph-bold ph-lightning"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">UAX
+                                FP · UF1</span>
+                            <h1 class="text-lg font-bold text-white tracking-tight">Sistemas de Potencia</h1>
+                        </div>
+                        <p class="text-xs text-slate-400">Laboratorio Interactivo: Intensidad, Materiales, Resistencia y
+                            Caída de Tensión</p>
+                    </div>
+                </div>
+
+                <!-- Navegación de Módulos -->
+                <nav class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 no-scrollbar" id="main-nav">
+                    <button onclick="switchTab('materiales')" id="tab-materiales"
+                        class="nav-btn active px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap bg-blue-600 text-white shadow-lg shadow-blue-600/30">
+                        <i class="ph-bold ph-atom"></i> 1. Materiales y Resistencia
+                    </button>
+                    <button onclick="switchTab('caida')" id="tab-caida"
+                        class="nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap text-slate-300 hover:bg-slate-800">
+                        <i class="ph-bold ph-activity"></i> 2. Intensidad y Caída de Tensión
+                    </button>
+                    <button onclick="switchTab('circuitos')" id="tab-circuitos"
+                        class="nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap text-slate-300 hover:bg-slate-800">
+                        <i class="ph-bold ph-circuitry"></i> 3. Circuitos, Divisor y Wheatstone
+                    </button>
+                    <button onclick="switchTab('componentes')" id="tab-componentes"
+                        class="nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap text-slate-300 hover:bg-slate-800">
+                        <i class="ph-bold ph-palette"></i> 4. Colores, C y L
+                    </button>
+                    <button onclick="switchTab('ejercicios')" id="tab-ejercicios"
+                        class="nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20">
+                        <i class="ph-bold ph-check-square-offset"></i> 5. Retos PDF (Feedback)
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ===================================================================== -->
+        <!-- MÓDULO 1: MATERIALES, RESISTIVIDAD Y TEMPERATURA                      -->
+        <!-- ===================================================================== -->
+        <section id="sec-materiales" class="tab-content space-y-6">
+            <!-- Banner explicativo -->
+            <div
+                class="bg-gradient-to-r from-slate-900 via-blue-950/40 to-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                <div class="space-y-1 max-w-3xl">
+                    <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="ph-fill ph-cube-transparent text-blue-400"></i>
+                        ¿Por qué un cable ofrece resistencia al paso de electrones?
+                    </h2>
+                    <p class="text-sm text-slate-300 leading-relaxed">
+                        La <strong>resistencia eléctrica ($R$)</strong> es la oposición que presenta un cuerpo al paso
+                        de la corriente. Depende de 4 factores clave: el <strong>material ($\rho$)</strong>, la
+                        <strong>longitud ($l$)</strong>, el grosor o <strong>sección ($S$)</strong> y la
+                        <strong>temperatura ($T$)</strong>. ¡Experimenta con el conductor 3D abajo!
+                    </p>
+                </div>
+                <div
+                    class="flex flex-wrap gap-2 text-xs font-mono bg-slate-950/80 p-3 rounded-xl border border-slate-800 shrink-0">
+                    <div class="px-2.5 py-1 bg-blue-500/10 border border-blue-500/30 rounded text-blue-300">
+                        R = ρ · (l / S)
+                    </div>
+                    <div class="px-2.5 py-1 bg-amber-500/10 border border-amber-500/30 rounded text-amber-300">
+                        R_T2 = R_20 · [1 + α·(T2 - 20)]
+                    </div>
+                    <div class="px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded text-emerald-300">
+                        G = 1 / R (Siemens)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Clasificación de materiales interactiva -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div onclick="selectMaterialClass('conductor')" id="mat-card-conductor"
+                    class="cursor-pointer bg-slate-900/90 hover:bg-slate-800/80 border-2 border-blue-500 rounded-xl p-4 transition-all">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-blue-400">1. Conductores</span>
+                        <i class="ph-fill ph-lightning text-blue-400 text-lg"></i>
+                    </div>
+                    <p class="text-xs text-slate-300 mb-2">Dejan pasar los electrones ($e^-$) fácilmente. Poseen baja
+                        resistividad ($\rho$).</p>
+                    <div class="text-[11px] font-mono text-slate-400 bg-slate-950 p-2 rounded">Ej: Plata, Cobre, Oro,
+                        Aluminio.</div>
+                </div>
+
+                <div onclick="selectMaterialClass('aislante')" id="mat-card-aislante"
+                    class="cursor-pointer bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 rounded-xl p-4 transition-all">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-rose-400">2. Aislantes</span>
+                        <i class="ph-fill ph-shield-slash text-rose-400 text-lg"></i>
+                    </div>
+                    <p class="text-xs text-slate-300 mb-2">No permiten el paso de electrones. Evitan fugas o
+                        cortocircuitos.</p>
+                    <div class="text-[11px] font-mono text-slate-400 bg-slate-950 p-2 rounded">Ej: Plástico, Madera,
+                        Vidrio, Cerámica.</div>
+                </div>
+
+                <div onclick="selectMaterialClass('semiconductor')" id="mat-card-semiconductor"
+                    class="cursor-pointer bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 rounded-xl p-4 transition-all">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-amber-400">3.
+                            Semiconductores</span>
+                        <i class="ph-fill ph-cpu text-amber-400 text-lg"></i>
+                    </div>
+                    <p class="text-xs text-slate-300 mb-2">Conducen o no según las condiciones físicas (luz,
+                        temperatura, dopado).</p>
+                    <div class="text-[11px] font-mono text-slate-400 bg-slate-950 p-2 rounded">Ej: Silicio (Si),
+                        Germanio (Ge).</div>
+                </div>
+
+                <div onclick="selectMaterialClass('superconductor')" id="mat-card-superconductor"
+                    class="cursor-pointer bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 rounded-xl p-4 transition-all">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">4.
+                            Superconductores</span>
+                        <i class="ph-fill ph-snowflake text-cyan-400 text-lg"></i>
+                    </div>
+                    <p class="text-xs text-slate-300 mb-2">Permiten el paso de $e^-$ con <strong>resistencia nula
+                            ($0\,\Omega$)</strong> cerca del cero absoluto.</p>
+                    <div class="text-[11px] font-mono text-slate-400 bg-slate-950 p-2 rounded">Sin pérdidas por efecto
+                        Joule.</div>
+                </div>
+            </div>
+
+            <!-- Simulador Principal de Resistencia Física del Conductor -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <!-- Controles (Izquierda) -->
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-5">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <h3 class="font-bold text-white flex items-center gap-2">
+                            <i class="ph-bold ph-sliders text-blue-400"></i> Parámetros del Conductor
+                        </h3>
+                        <button onclick="loadPresetVarillaPDF()"
+                            class="text-xs px-2.5 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 hover:bg-amber-500/30 transition">
+                            Cargar Ej. 1 del PDF
+                        </button>
+                    </div>
+
+                    <!-- Selector de Material (Tabla 1 del PDF) -->
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                            Material del Conductor (Tabla 1 UAX)
+                        </label>
+                        <select id="mat-select" onchange="updateWireSim()"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+                            <option value="0.0159" data-name="Plata (Ag)"
+                                data-obs="Mejor conductor conocido, pero muy caro.">Plata (Ag) — ρ = 0.0159 Ω·mm²/m
+                            </option>
+                            <option value="0.0172" selected data-name="Cobre (Cu)"
+                                data-obs="El estándar en conductores eléctricos domésticos e industriales.">Cobre (Cu) —
+                                ρ = 0.0172 Ω·mm²/m</option>
+                            <option value="0.0244" data-name="Oro (Au)"
+                                data-obs="Caro, muy estable frente a corrosión. Usado en conectores de alta gama.">Oro
+                                (Au) — ρ = 0.0244 Ω·mm²/m</option>
+                            <option value="0.0282" data-name="Aluminio (Al)"
+                                data-obs="Ligero y más económico. Muy usado en líneas de Alta Tensión (A.T.).">Aluminio
+                                (Al) — ρ = 0.0282 Ω·mm²/m</option>
+                            <option value="0.0560" data-name="Wolframio (W)"
+                                data-obs="Muy resistente al calor (filamentos de bombillas incandescentes).">Wolframio
+                                (W) — ρ = 0.0560 Ω·mm²/m</option>
+                            <option value="0.0699" data-name="Níquel (Ni)"
+                                data-obs="Usado frecuentemente en aleaciones y resistencias.">Níquel (Ni) — ρ = 0.0699
+                                Ω·mm²/m</option>
+                            <option value="0.0971" data-name="Hierro (Fe)"
+                                data-obs="Se oxida con facilidad, peor conductor que el cobre.">Hierro (Fe) — ρ = 0.0971
+                                Ω·mm²/m</option>
+                            <option value="0.1060" data-name="Platino (Pt)"
+                                data-obs="Alta estabilidad química. Usado en sensores térmicos PT-100.">Platino (Pt) — ρ
+                                = 0.1060 Ω·mm²/m</option>
+                            <option value="0.1150" data-name="Estaño (Sn)"
+                                data-obs="Común en soldaduras blandas electrónicas.">Estaño (Sn) — ρ = 0.1150 Ω·mm²/m
+                            </option>
+                        </select>
+                        <p id="mat-obs" class="mt-1.5 text-xs text-blue-400 italic">El estándar en conductores
+                            eléctricos domésticos e industriales.</p>
+                    </div>
+
+                    <!-- Longitud (L) -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300 font-medium">Longitud del cable ($l$): <strong
+                                    class="text-blue-400">a más largo, MÁS resistencia</strong></span>
+                            <span id="val-length" class="font-mono font-bold text-white">50 m</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="range" id="slider-length" min="0.1" max="500" step="0.1" value="50"
+                                oninput="syncLengthInput(this.value)" class="w-full">
+                            <input type="number" id="num-length" min="0.05" max="5000" step="0.1" value="50"
+                                oninput="syncLengthSlider(this.value)"
+                                class="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-right text-white">
+                        </div>
+                    </div>
+
+                    <!-- Sección (S) -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300 font-medium">Sección o grosor ($S$): <strong
+                                    class="text-emerald-400">a más grueso, MENOS resistencia</strong></span>
+                            <span id="val-section" class="font-mono font-bold text-white">2.5 mm²</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="range" id="slider-section" min="0.5" max="50" step="0.5" value="2.5"
+                                oninput="syncSectionInput(this.value)" class="w-full">
+                            <input type="number" id="num-section" min="0.1" max="200" step="0.1" value="2.5"
+                                oninput="syncSectionSlider(this.value)"
+                                class="w-20 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono text-right text-white">
+                        </div>
+                        <div class="flex flex-wrap gap-1.5 mt-2">
+                            <span class="text-[10px] text-slate-400 self-center mr-1">Secciones normalizadas:</span>
+                            <button onclick="setSection(1.5)"
+                                class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">1.5
+                                mm²</button>
+                            <button onclick="setSection(2.5)"
+                                class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">2.5
+                                mm²</button>
+                            <button onclick="setSection(4)"
+                                class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">4
+                                mm²</button>
+                            <button onclick="setSection(6)"
+                                class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">6
+                                mm²</button>
+                            <button onclick="setSection(10)"
+                                class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">10
+                                mm²</button>
+                            <button onclick="setSection(16)"
+                                class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200">16
+                                mm²</button>
+                        </div>
+                    </div>
+
+                    <!-- Temperatura (T) -->
+                    <div class="pt-2 border-t border-slate-800">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300 font-medium">Temperatura ($T_2$): <strong
+                                    class="text-amber-400">el calor agita átomos y SUBE $R$</strong></span>
+                            <span id="val-temp" class="font-mono font-bold text-amber-400">20 °C</span>
+                        </div>
+                        <input type="range" id="slider-temp" min="-20" max="200" step="1" value="20"
+                            oninput="updateWireSim()" class="w-full">
+                        <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                            <span>-20 °C (Frío)</span>
+                            <span class="text-blue-400 cursor-pointer underline"
+                                onclick="document.getElementById('slider-temp').value=20;updateWireSim();">Referencia 20
+                                °C</span>
+                            <span class="text-amber-400 cursor-pointer underline"
+                                onclick="document.getElementById('slider-temp').value=70;updateWireSim();">70 °C (Ej. 4
+                                PDF)</span>
+                            <span>200 °C</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visualizador 3D del Cilindro y Resultados (Derecha) -->
+                <div
+                    class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-5">
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Visualización Física
+                                y Atómica del Conductor</span>
+                            <span id="wire-temp-badge"
+                                class="text-xs font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">Temp.
+                                Estándar (20 °C)</span>
+                        </div>
+
+                        <!-- Lienzo SVG del Conductor Cilíndrico -->
+                        <div
+                            class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 flex items-center justify-center relative overflow-hidden h-56">
+                            <svg id="wire-svg" viewBox="0 0 600 200" class="w-full h-full">
+                                <defs>
+                                    <linearGradient id="copperGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                        <stop offset="0%" stop-color="#f59e0b" id="grad-stop-1" />
+                                        <stop offset="50%" stop-color="#d97706" id="grad-stop-2" />
+                                        <stop offset="100%" stop-color="#78350f" id="grad-stop-3" />
+                                    </linearGradient>
+                                </defs>
+                                <!-- Cota de Longitud -->
+                                <g id="svg-length-guide" stroke="#64748b" stroke-width="1.5">
+                                    <line x1="100" y1="25" x2="500" y2="25" id="dim-line" />
+                                    <line x1="100" y1="18" x2="100" y2="32" id="dim-left" />
+                                    <line x1="500" y1="18" x2="500" y2="32" id="dim-right" />
+                                    <text x="300" y="18" fill="#94a3b8" font-family="JetBrains Mono" font-size="12"
+                                        text-anchor="middle" stroke="none" id="svg-length-label">l = 50 m</text>
+                                </g>
+
+                                <!-- Cuerpo del Cilindro -->
+                                <rect id="wire-body" x="100" y="65" width="400" height="70" fill="url(#copperGrad)"
+                                    stroke="#475569" stroke-width="1.5" rx="2" />
+                                <!-- Cara izquierda (elipse) -->
+                                <ellipse id="wire-cap-left" cx="100" cy="100" rx="14" ry="35" fill="#b45309"
+                                    stroke="#fbbf24" stroke-width="1.5" />
+                                <!-- Cara derecha (Sección S) -->
+                                <ellipse id="wire-cap-right" cx="500" cy="100" rx="14" ry="35" fill="#fbbf24"
+                                    stroke="#f59e0b" stroke-width="2" />
+
+                                <!-- Flujo de electrones animado dentro del conductor -->
+                                <line id="wire-electrons-1" x1="115" y1="88" x2="485" y2="88" stroke="#fef08a"
+                                    stroke-width="2.5" class="electron-flow-real" style="--flow-speed: 1.2s;" />
+                                <line id="wire-electrons-2" x1="115" y1="112" x2="485" y2="112" stroke="#fef08a"
+                                    stroke-width="2.5" class="electron-flow-real" style="--flow-speed: 1.2s;" />
+
+                                <!-- Etiqueta de sección -->
+                                <text id="svg-section-label" x="500" y="165" fill="#34d399" font-family="JetBrains Mono"
+                                    font-size="12" font-weight="bold" text-anchor="middle">S = 2.5 mm²</text>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Tarjetas de Resultados -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Resistencia a 20°C ($R_{20}$)</span>
+                            <span id="res-r20" class="text-lg font-mono font-bold text-blue-400">0.3440 Ω</span>
+                            <span class="text-[10px] text-slate-500 block mt-0.5">ρ · (l / S)</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Resistencia a <span id="lbl-t2">20</span>°C
+                                ($R_T$)</span>
+                            <span id="res-rt" class="text-lg font-mono font-bold text-amber-400">0.3440 Ω</span>
+                            <span class="text-[10px] text-slate-500 block mt-0.5">α = 0.004 °C⁻¹</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Conductancia ($G = 1/R$)</span>
+                            <span id="res-g" class="text-lg font-mono font-bold text-emerald-400">2.91 S</span>
+                            <span class="text-[10px] text-slate-500 block mt-0.5">Facilidad de paso</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Conductividad ($\sigma = 1/\rho$)</span>
+                            <span id="res-sigma" class="text-lg font-mono font-bold text-purple-400">58.14</span>
+                            <span class="text-[10px] text-slate-500 block mt-0.5">m / (Ω·mm²)</span>
+                        </div>
+                    </div>
+
+                    <!-- Analogía Pedagógica Dinámica -->
+                    <div
+                        class="bg-blue-950/30 border border-blue-500/30 rounded-xl p-3.5 text-xs text-slate-200 flex items-start gap-3">
+                        <i class="ph-fill ph-lightbulb-filament text-amber-400 text-xl shrink-0 mt-0.5"></i>
+                        <div id="wire-explanation">
+                            <strong>Analogía de la autopista:</strong> La <strong>longitud ($l$)</strong> es la
+                            distancia del viaje y la <strong>sección ($S$)</strong> es el número de carriles. Si
+                            aumentas la sección (más carriles), los electrones pasan con mucha menos oposición y la
+                            resistencia baja drásticamente.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- MÓDULO 2: INTENSIDAD, CAÍDA DE TENSIÓN Y PÉRDIDA DE POTENCIA          -->
+        <!-- ===================================================================== -->
+        <section id="sec-caida" class="tab-content hidden space-y-6">
+            <!-- Explicación clara de Intensidad vs Caída de Tensión -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="flex items-center gap-2 text-cyan-400 font-bold text-sm mb-1.5">
+                        <i class="ph-bold ph-waves text-lg"></i> 1. ¿Qué es la Intensidad ($I$)?
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Es el <strong>caudal de electrones</strong> que atraviesa la sección del cable cada segundo: $I
+                        = \frac{Q}{t}$.<br>
+                        <span class="text-cyan-300 font-mono">1 Amperio (A) = 1 Culombio/s = 6.25×10¹⁸
+                            electrones/s</span>. Se mide intercalando el <strong>amperímetro en serie</strong>.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="flex items-center gap-2 text-amber-400 font-bold text-sm mb-1.5">
+                        <i class="ph-bold ph-trend-down text-lg"></i> 2. ¿Qué es la Caída de Tensión ($\Delta V$)?
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Los cables reales <strong>no tienen resistencia cero</strong>. Al circular una intensidad $I$
+                        por la resistencia del propio cable ($R_{cable}$), se pierde voltaje en el camino según la Ley
+                        de Ohm: <span class="text-amber-300 font-mono">c.d.t. = I · R_cable</span>. Al final de la línea
+                        llega menos tensión ($V = V_0 - \text{c.d.t.}$).
+                    </p>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+                    <div class="flex items-center gap-2 text-rose-400 font-bold text-sm mb-1.5">
+                        <i class="ph-bold ph-fire text-lg"></i> 3. Efecto Joule y Densidad ($J$)
+                    </div>
+                    <p class="text-xs text-slate-300 leading-relaxed">
+                        Esa caída de tensión en el cable se transforma en calor: <span
+                            class="text-rose-300 font-mono">P_perdida = I² · R_cable</span>.<br>
+                        Además, la <strong>densidad de corriente ($J = I/S$)</strong> mide cuántos Amperios van por cada
+                        $\text{mm}^2$. Si es muy alta, el cable se quema.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Simulador Interactivo de Línea de Transporte y Caída de Tensión -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Panel de Controles de la Línea -->
+                <div class="lg:col-span-4 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                            <i class="ph-bold ph-plugs-connected text-amber-400"></i> Control de la Línea y Carga
+                        </h3>
+                        <button onclick="toggleShortCircuit()" id="btn-shortcircuit"
+                            class="text-xs font-bold px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25 transition flex items-center gap-1">
+                            <i class="ph-bold ph-warning"></i> Simular Cortocircuito
+                        </button>
+                    </div>
+
+                    <!-- Tensión al principio de la línea V0 -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Tensión en origen ($V_0$):</span>
+                            <span id="cdt-val-v0" class="font-mono font-bold text-blue-400">230 V</span>
+                        </div>
+                        <input type="range" id="cdt-v0" min="12" max="400" step="1" value="230" oninput="updateCDTSim()"
+                            class="w-full">
+                        <div class="flex gap-1.5 mt-1">
+                            <button onclick="setCDTV0(12)"
+                                class="text-[10px] font-mono px-2 py-0.5 bg-slate-800 rounded text-slate-300">12V
+                                DC</button>
+                            <button onclick="setCDTV0(24)"
+                                class="text-[10px] font-mono px-2 py-0.5 bg-slate-800 rounded text-slate-300">24V
+                                Ind.</button>
+                            <button onclick="setCDTV0(230)"
+                                class="text-[10px] font-mono px-2 py-0.5 bg-slate-800 rounded text-slate-300">230V
+                                Red</button>
+                            <button onclick="setCDTV0(400)"
+                                class="text-[10px] font-mono px-2 py-0.5 bg-slate-800 rounded text-slate-300">400V
+                                Trif.</button>
+                        </div>
+                    </div>
+
+                    <!-- Intensidad demandada por la carga (I) -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Intensidad que circula ($I$):</span>
+                            <span id="cdt-val-i" class="font-mono font-bold text-cyan-400">16 A</span>
+                        </div>
+                        <input type="range" id="cdt-i" min="1" max="80" step="0.5" value="16" oninput="updateCDTSim()"
+                            class="w-full">
+                    </div>
+
+                    <!-- Longitud de la línea (L) -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Longitud de la línea ($L$):</span>
+                            <span id="cdt-val-l" class="font-mono font-bold text-white">40 m</span>
+                        </div>
+                        <input type="range" id="cdt-l" min="5" max="300" step="5" value="40" oninput="updateCDTSim()"
+                            class="w-full">
+                    </div>
+
+                    <!-- Sección del conductor (S) -->
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Sección del cable ($S$):</span>
+                            <span id="cdt-val-s" class="font-mono font-bold text-emerald-400">2.5 mm²</span>
+                        </div>
+                        <input type="range" id="cdt-s" min="1" max="35" step="0.5" value="2.5" oninput="updateCDTSim()"
+                            class="w-full">
+                    </div>
+
+                    <!-- Material y Modo de cálculo de línea -->
+                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">Material</label>
+                            <select id="cdt-mat" onchange="updateCDTSim()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+                                <option value="0.0172">Cobre (Cu)</option>
+                                <option value="0.0282">Aluminio (Al)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-slate-400 block mb-1">Cálculo de longitud</label>
+                            <select id="cdt-wires" onchange="updateCDTSim()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-xs text-white">
+                                <option value="2">Línea (Ida + Vuelta = 2L)</option>
+                                <option value="1">Un solo conductor (1L)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Selector de sentido de corriente (apartado 3.3 PDF) -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between">
+                        <span class="text-xs text-slate-300">Sentido de los $e^-$ (3.3):</span>
+                        <div class="flex gap-1">
+                            <button onclick="setFlowDirection('conv')" id="btn-dir-conv"
+                                class="text-[11px] px-2.5 py-1 rounded bg-blue-600 text-white font-medium">Convencional
+                                (+ a -)</button>
+                            <button onclick="setFlowDirection('real')" id="btn-dir-real"
+                                class="text-[11px] px-2.5 py-1 rounded bg-slate-800 text-slate-400 font-medium">Real (-
+                                a +)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Esquema Interactivo de la Línea (Ilustración 13 del PDF mejorada) -->
+                <div
+                    class="lg:col-span-8 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-5">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h3 class="font-bold text-white text-base">Esquema Dinámico: Caída de Tensión en la Línea
+                                ($\text{c.d.t.} = V_0 - V$)</h3>
+                            <p class="text-xs text-slate-400">Observa cómo el voltímetro al principio mide $V_0$ y al
+                                final en la carga mide $V$.</p>
+                        </div>
+                        <div id="cdt-status-badge"
+                            class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            Caída aceptable (3.8%)
+                        </div>
+                    </div>
+
+                    <!-- Esquema SVG Ilustración 13 -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 relative overflow-hidden">
+                        <svg viewBox="0 0 720 260" class="w-full h-auto">
+                            <!-- Cota de longitud L arriba -->
+                            <line x1="90" y1="22" x2="540" y2="22" stroke="#475569" stroke-dasharray="4 4"
+                                stroke-width="1.5" />
+                            <text id="svg-cdt-l" x="315" y="16" fill="#94a3b8" font-family="JetBrains Mono"
+                                font-size="12" text-anchor="middle">Longitud Línea L = 40 m</text>
+
+                            <!-- Generador / Origen V0 -->
+                            <circle cx="65" cy="135" r="32" fill="#0f172a" stroke="#3b82f6" stroke-width="2.5" />
+                            <text x="65" y="130" fill="#60a5fa" font-family="JetBrains Mono" font-size="13"
+                                font-weight="bold" text-anchor="middle">V₀</text>
+                            <text id="svg-cdt-v0" x="65" y="148" fill="#ffffff" font-family="JetBrains Mono"
+                                font-size="12" font-weight="bold" text-anchor="middle">230V</text>
+                            <text x="65" y="92" fill="#60a5fa" font-size="14" font-weight="bold"
+                                text-anchor="middle">+</text>
+                            <text x="65" y="185" fill="#94a3b8" font-size="14" font-weight="bold"
+                                text-anchor="middle">-</text>
+
+                            <!-- Conductor Superior (con resistencia del cable) -->
+                            <line x1="65" y1="103" x2="65" y2="65" stroke="#64748b" stroke-width="3" />
+                            <line id="cdt-wire-top" x1="65" y1="65" x2="580" y2="65" stroke="#f59e0b"
+                                stroke-width="5" />
+                            <!-- Animación de electrones arriba -->
+                            <line id="cdt-flow-top" x1="65" y1="65" x2="580" y2="65" stroke="#fef08a" stroke-width="3"
+                                class="electron-flow-conv" />
+
+                            <!-- Amperímetro en Serie (Ilustración 7 PDF) -->
+                            <circle cx="200" cy="65" r="18" fill="#0f172a" stroke="#06b6d4" stroke-width="2.5" />
+                            <text x="200" y="70" fill="#22d3ee" font-family="Inter" font-size="14" font-weight="bold"
+                                text-anchor="middle">A</text>
+                            <text id="svg-cdt-i" x="200" y="38" fill="#22d3ee" font-family="JetBrains Mono"
+                                font-size="12" font-weight="bold" text-anchor="middle">I = 16.0 A</text>
+
+                            <!-- Caja representando la resistencia propia del conductor y su caída -->
+                            <rect x="300" y="47" width="165" height="36" rx="6" fill="#1e293b" stroke="#f59e0b"
+                                stroke-width="1.5" />
+                            <text id="svg-cdt-rcable" x="382" y="62" fill="#fcd34d" font-family="JetBrains Mono"
+                                font-size="10" text-anchor="middle">R_cable = 0.55 Ω</text>
+                            <text id="svg-cdt-drop" x="382" y="76" fill="#fbbf24" font-family="JetBrains Mono"
+                                font-size="11" font-weight="bold" text-anchor="middle">c.d.t. = 8.81 V</text>
+
+                            <!-- Conductor Inferior -->
+                            <line x1="65" y1="167" x2="65" y2="205" stroke="#64748b" stroke-width="3" />
+                            <line id="cdt-wire-bot" x1="65" y1="205" x2="580" y2="205" stroke="#64748b"
+                                stroke-width="5" />
+                            <line id="cdt-flow-bot" x1="580" y1="205" x2="65" y2="205" stroke="#93c5fd" stroke-width="3"
+                                class="electron-flow-conv" />
+
+                            <!-- Rama de Cortocircuito (oculta por defecto) -->
+                            <g id="svg-shortcircuit-branch" class="hidden">
+                                <line x1="490" y1="65" x2="490" y2="205" stroke="#ef4444" stroke-width="6" />
+                                <circle cx="490" cy="135" r="22" fill="#7f1d1d" stroke="#ef4444" stroke-width="2" />
+                                <text x="490" y="140" fill="#fca5a5" font-size="11" font-weight="bold"
+                                    text-anchor="middle">R≈0Ω</text>
+                            </g>
+
+                            <!-- Carga al final de la línea -->
+                            <line x1="580" y1="65" x2="580" y2="95" stroke="#64748b" stroke-width="3" />
+                            <line x1="580" y1="175" x2="580" y2="205" stroke="#64748b" stroke-width="3" />
+                            <rect id="svg-load-box" x="535" y="95" width="90" height="80" rx="10" fill="#0f172a"
+                                stroke="#10b981" stroke-width="2.5" />
+                            <text x="580" y="122" fill="#94a3b8" font-family="Inter" font-size="11" font-weight="bold"
+                                text-anchor="middle">CARGA</text>
+                            <text id="svg-cdt-vload" x="580" y="144" fill="#34d399" font-family="JetBrains Mono"
+                                font-size="15" font-weight="bold" text-anchor="middle">221.2 V</text>
+                            <text id="svg-cdt-pload" x="580" y="162" fill="#6ee7b7" font-family="JetBrains Mono"
+                                font-size="10" text-anchor="middle">3539 W</text>
+
+                            <!-- Voltímetro en paralelo al final -->
+                            <line x1="625" y1="80" x2="675" y2="80" stroke="#475569" stroke-dasharray="3 3" />
+                            <line x1="625" y1="190" x2="675" y2="190" stroke="#475569" stroke-dasharray="3 3" />
+                            <line x1="675" y1="80" x2="675" y2="190" stroke="#475569" stroke-dasharray="3 3" />
+                            <circle cx="675" cy="135" r="18" fill="#0f172a" stroke="#10b981" stroke-width="2" />
+                            <text x="675" y="140" fill="#34d399" font-family="Inter" font-size="14" font-weight="bold"
+                                text-anchor="middle">V</text>
+                        </svg>
+                    </div>
+
+                    <!-- Panel de Métricas Detalladas (Caída de Tensión, Pérdida de Potencia, Densidad, Calorías) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="text-[10px] text-slate-400 uppercase block">Caída Tensión (c.d.t.)</span>
+                            <span id="metric-cdt" class="text-base font-mono font-bold text-amber-400">8.81 V</span>
+                            <span id="metric-cdt-pct" class="text-[10px] text-slate-400 block">3.83% de V₀</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="text-[10px] text-slate-400 uppercase block">Tensión en Carga ($V$)</span>
+                            <span id="metric-vfinal" class="text-base font-mono font-bold text-emerald-400">221.19
+                                V</span>
+                            <span class="text-[10px] text-slate-400 block">V = V₀ - c.d.t.</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="text-[10px] text-slate-400 uppercase block">Pérdida Línea ($P_p$)</span>
+                            <span id="metric-ploss" class="text-base font-mono font-bold text-rose-400">140.9 W</span>
+                            <span class="text-[10px] text-slate-400 block">p = R_cable · I²</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="text-[10px] text-slate-400 uppercase block">Densidad ($J = I/S$)</span>
+                            <span id="metric-j" class="text-base font-mono font-bold text-cyan-400">6.40 A/mm²</span>
+                            <span class="text-[10px] text-slate-400 block">Intensidad / Sección</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl col-span-2 sm:col-span-1">
+                            <span class="text-[10px] text-slate-400 uppercase block">Calor en 1 hora (Joule)</span>
+                            <span id="metric-kcal" class="text-base font-mono font-bold text-orange-400">121.7
+                                kcal</span>
+                            <span class="text-[10px] text-slate-400 block">E(cal) = 0.24 · I²·R·t</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- MÓDULO 3: ACOPLAMIENTOS, DIVISOR DE TENSIÓN Y PUENTE DE WHEATSTONE     -->
+        <!-- ===================================================================== -->
+        <section id="sec-circuitos" class="tab-content hidden space-y-6">
+            <!-- Selector de Sub-laboratorio -->
+            <div
+                class="flex flex-wrap items-center justify-between gap-4 bg-slate-900 border border-slate-800 p-4 rounded-2xl">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Análisis de Circuitos y Acoplamientos de Resistencias</h2>
+                    <p class="text-xs text-slate-400">Compara cómo se reparte la tensión y la intensidad en Serie,
+                        Paralelo, Divisor de Tensión y Puente de Wheatstone.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="switchCircuitSub('sp')" id="subbtn-sp"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white">Serie vs
+                        Paralelo</button>
+                    <button onclick="switchCircuitSub('divisor')" id="subbtn-divisor"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">Divisor
+                        de Tensión (Ej. 8)</button>
+                    <button onclick="switchCircuitSub('wheatstone')" id="subbtn-wheatstone"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">Puente
+                        Wheatstone + PT100 (Ej. 9)</button>
+                </div>
+            </div>
+
+            <!-- SUB-LAB 3A: SERIE VS PARALELO -->
+            <div id="sub-sp" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-white text-sm">Configuración del Circuito</h3>
+                        <button onclick="loadPresetEj6PDF()"
+                            class="text-xs px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            Cargar Ej. 6 del PDF
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setSPMode('serie')" id="btn-mode-serie"
+                            class="py-2 rounded-xl text-xs font-bold bg-blue-600 text-white border border-blue-500">
+                            En Serie (3.14)
+                        </button>
+                        <button onclick="setSPMode('paralelo')" id="btn-mode-paralelo"
+                            class="py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700">
+                            En Paralelo (3.15)
+                        </button>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Tensión de Red ($V_{total}$):</span>
+                            <span id="sp-val-v" class="font-mono font-bold text-blue-400">100 V</span>
+                        </div>
+                        <input type="range" id="sp-v" min="5" max="250" step="5" value="100" oninput="updateSPSim()"
+                            class="w-full">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Resistencia $R_1$:</span>
+                            <span id="sp-val-r1" class="font-mono font-bold text-white">100 Ω</span>
+                        </div>
+                        <input type="range" id="sp-r1" min="10" max="500" step="10" value="100" oninput="updateSPSim()"
+                            class="w-full">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Resistencia $R_2$:</span>
+                            <span id="sp-val-r2" class="font-mono font-bold text-white">50 Ω</span>
+                        </div>
+                        <input type="range" id="sp-r2" min="10" max="500" step="10" value="50" oninput="updateSPSim()"
+                            class="w-full">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Resistencia $R_3$:</span>
+                            <span id="sp-val-r3" class="font-mono font-bold text-white">150 Ω</span>
+                        </div>
+                        <input type="range" id="sp-r3" min="10" max="500" step="10" value="150" oninput="updateSPSim()"
+                            class="w-full">
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-5">
+                    <div id="sp-rule-banner"
+                        class="bg-blue-950/40 border border-blue-500/30 rounded-xl p-3.5 text-xs text-slate-200">
+                        <strong>Regla de Oro en SERIE (2ª Ley de Kirchhoff):</strong> La <strong>intensidad ($I$) es
+                            idéntica</strong> por todas las resistencias, pero la <strong>tensión ($V$) se
+                            reparte</strong> proporcionalmente al valor de cada resistencia ($V_T = V_1 + V_2 + V_3$).
+                    </div>
+
+                    <!-- Resultados Globales -->
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Resistencia Equiv. ($R_{eq}$)</span>
+                            <span id="sp-req" class="text-lg font-mono font-bold text-amber-400">300.00 Ω</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Intensidad Total ($I_T$)</span>
+                            <span id="sp-it" class="text-lg font-mono font-bold text-cyan-400">0.333 A</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Potencia Total ($P_T$)</span>
+                            <span id="sp-pt" class="text-lg font-mono font-bold text-emerald-400">33.33 W</span>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Reparto en cada Resistencia -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs font-mono">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-slate-400">
+                                    <th class="py-2 px-3">Elemento</th>
+                                    <th class="py-2 px-3">Valor ($R$)</th>
+                                    <th class="py-2 px-3">Caída Tensión ($V_i$)</th>
+                                    <th class="py-2 px-3">Intensidad ($I_i$)</th>
+                                    <th class="py-2 px-3">Potencia ($P_i$)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sp-table-body" class="divide-y divide-slate-800/60">
+                                <!-- Dinámico -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-LAB 3B: DIVISOR DE TENSIÓN CON POTENCIÓMETRO (EJERCICIO 8 DEL PDF) -->
+            <div id="sub-divisor" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-white text-sm">Divisor de Tensión con Reóstato $P$</h3>
+                        <button onclick="loadPresetEj8PDF()"
+                            class="text-xs px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            Valores Ej. 8 PDF
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-400">
+                        En el Ejercicio 8 del PDF tenemos $V_{in}$, una resistencia superior $R_1$, y en la rama
+                        inferior hacia masa están en serie $R_2$ y una resistencia variable $P$.
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">$V_{in}$ (Voltios)</label>
+                            <input type="number" id="div-vin" value="24" oninput="updateDivisorSim()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">$R_1$ Superior (Ω)</label>
+                            <input type="number" id="div-r1" value="270" oninput="updateDivisorSim()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">$R_2$ Inferior (Ω)</label>
+                            <input type="number" id="div-r2" value="100" oninput="updateDivisorSim()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">$P_{máx}$ Potenciómetro (Ω)</label>
+                            <input type="number" id="div-pmax" value="500" oninput="updateDivisorSim()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-white">
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-800">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Posición actual del cursor de $P$:</span>
+                            <span id="div-val-pcur" class="font-mono font-bold text-amber-400">250 Ω</span>
+                        </div>
+                        <input type="range" id="div-pcur" min="0" max="500" step="1" value="250"
+                            oninput="updateDivisorSim()" class="w-full">
+                    </div>
+                </div>
+
+                <div
+                    class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+                            <span class="text-xs text-slate-400 block">Mínimo $V_{out}$ (cuando $P=0\,\Omega$)</span>
+                            <span id="div-vmin" class="text-xl font-mono font-bold text-blue-400">6.49 V</span>
+                            <span class="text-[11px] text-slate-500 font-mono block mt-1">R_inf = R2 = 100 Ω</span>
+                        </div>
+                        <div class="bg-slate-950 border border-amber-500/40 p-4 rounded-xl">
+                            <span class="text-xs text-amber-300 block">$V_{out}$ Actual con el cursor</span>
+                            <span id="div-vnow" class="text-2xl font-mono font-bold text-amber-400">13.55 V</span>
+                            <span id="div-inow" class="text-[11px] text-slate-400 font-mono block mt-1">I = 38.7
+                                mA</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-4 rounded-xl">
+                            <span class="text-xs text-slate-400 block">Máximo $V_{out}$ (cuando $P=P_{máx}$)</span>
+                            <span id="div-vmax" class="text-xl font-mono font-bold text-emerald-400">16.62 V</span>
+                            <span class="text-[11px] text-slate-500 font-mono block mt-1">R_inf = R2+P = 600 Ω</span>
+                        </div>
+                    </div>
+
+                    <div
+                        class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs space-y-2 text-slate-300">
+                        <div class="text-slate-400 font-sans font-semibold">Fórmula del Divisor de Tensión paso a paso:
+                        </div>
+                        <div>1) Resistencia total de la rama: $R_{total} = R_1 + (R_2 + P)$</div>
+                        <div>2) Intensidad que recorre la rama: $I = \frac{V_{in}}{R_1 + R_2 + P}$</div>
+                        <div>3) Tensión de salida en el nodo intermedio: $V_{out} = I \cdot (R_2 + P) = V_{in} \cdot
+                            \frac{R_2 + P}{R_1 + R_2 + P}$</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SUB-LAB 3C: PUENTE DE WHEATSTONE + SENSOR PT-100 (EJERCICIO 9 DEL PDF) -->
+            <div id="sub-wheatstone" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="font-bold text-white text-sm">Puente de Wheatstone + Sonda PT-100</h3>
+                        <button onclick="loadPresetEj9PDF()"
+                            class="text-xs px-2.5 py-1 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                            Cargar Ej. 9 (146 °C)
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-400">
+                        Una <strong>PT-100</strong> es una resistencia de platino que a <strong>0 °C mide exactamente
+                            100 Ω</strong>. Al subir la temperatura, su resistencia sube y desequilibra el puente
+                        generando una tensión $V_{out}$ entre $a$ y $b$.
+                    </p>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">Tensión $V_{in}$ (V)</label>
+                            <input type="number" id="wh-vin" value="24" oninput="updateWheatstoneSim()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-mono text-white">
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 block mb-1">$R_1 = R_2 = R_3$ (Ω)</label>
+                            <input type="number" id="wh-r" value="100" oninput="updateWheatstoneSim()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-sm font-mono text-white">
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-slate-300">Temperatura en la PT-100 ($T$):</span>
+                            <span id="wh-val-temp" class="font-mono font-bold text-amber-400">146 °C</span>
+                        </div>
+                        <input type="range" id="wh-temp" min="0" max="300" step="1" value="146"
+                            oninput="updateWheatstoneSim()" class="w-full">
+                    </div>
+
+                    <div>
+                        <label class="text-xs text-slate-400 block mb-1">Coeficiente térmico ($\alpha$) usado para
+                            PT-100:</label>
+                        <select id="wh-alpha" onchange="updateWheatstoneSim()"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white font-mono">
+                            <option value="0.00385">Norma DIN 43760 / IEC 60751 (α = 0.00385 °C⁻¹)</option>
+                            <option value="0.004">Aproximación general apuntes UAX (α = 0.004 °C⁻¹)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Resistencia $R_x$ (PT100)</span>
+                            <span id="wh-rx" class="text-lg font-mono font-bold text-amber-400">156.21 Ω</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Potencial Nodo A ($V_a$)</span>
+                            <span id="wh-va" class="text-lg font-mono font-bold text-blue-400">12.00 V</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl">
+                            <span class="text-[11px] text-slate-400 block">Potencial Nodo B ($V_b$)</span>
+                            <span id="wh-vb" class="text-lg font-mono font-bold text-cyan-400">14.63 V</span>
+                        </div>
+                        <div class="bg-slate-950 border border-emerald-500/40 p-3.5 rounded-xl">
+                            <span class="text-[11px] text-emerald-300 block">Salida $|V_{out}| = |V_a - V_b|$</span>
+                            <span id="wh-vout" class="text-lg font-mono font-bold text-emerald-400">2.63 V</span>
+                        </div>
+                    </div>
+
+                    <div id="wh-steps"
+                        class="bg-slate-950 border border-slate-800 rounded-xl p-4 font-mono text-xs space-y-1.5 text-slate-300">
+                        <!-- Dinámico -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- MÓDULO 4: CÓDIGO DE COLORES (EJ. 10), CONDENSADORES Y BOBINAS         -->
+        <!-- ===================================================================== -->
+        <section id="sec-componentes" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Calculadora Interactiva de Código de Colores (4 Bandas) -->
+                <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-5">
+                    <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                        <div>
+                            <h3 class="font-bold text-white text-base">Calculadora de Código de Colores (4 Bandas)</h3>
+                            <p class="text-xs text-slate-400">Selecciona los colores o haz clic en cualquiera de las
+                                resistencias del Ejercicio 10 del PDF.</p>
+                        </div>
+                    </div>
+
+                    <!-- Dibujo SVG de la Resistencia con sus 4 bandas -->
+                    <div
+                        class="bg-slate-950 border border-slate-800 rounded-xl p-6 flex flex-col items-center justify-center">
+                        <svg viewBox="0 0 500 120" class="w-full max-w-md h-28">
+                            <!-- Terminales metálicos -->
+                            <line x1="20" y1="60" x2="130" y2="60" stroke="#94a3b8" stroke-width="8"
+                                stroke-linecap="round" />
+                            <line x1="370" y1="60" x2="480" y2="60" stroke="#94a3b8" stroke-width="8"
+                                stroke-linecap="round" />
+                            <!-- Cuerpo cerámico -->
+                            <rect x="120" y="25" width="260" height="70" rx="25" fill="#d6c7b2" stroke="#78716c"
+                                stroke-width="3" />
+                            <!-- 4 Bandas de color -->
+                            <rect id="svg-band-1" x="165" y="25" width="22" height="70" fill="#f97316" />
+                            <rect id="svg-band-2" x="210" y="25" width="22" height="70" fill="#f97316" />
+                            <rect id="svg-band-3" x="255" y="25" width="22" height="70" fill="#78350f" />
+                            <rect id="svg-band-4" x="320" y="25" width="22" height="70" fill="#eab308" />
+                        </svg>
+                        <div class="mt-2 text-center">
+                            <div id="color-res-main" class="text-2xl font-mono font-extrabold text-white">330 Ω ± 5%
+                            </div>
+                            <div id="color-res-range" class="text-xs font-mono text-slate-400 mt-0.5">Rango real
+                                permitido: [313.5 Ω — 346.5 Ω]</div>
+                        </div>
+                    </div>
+
+                    <!-- Selectores de las 4 bandas -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div>
+                            <label class="text-[11px] font-bold uppercase text-slate-400 block mb-1">1ª Cifra</label>
+                            <select id="band-1" onchange="updateColorCalc()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white"></select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold uppercase text-slate-400 block mb-1">2ª Cifra</label>
+                            <select id="band-2" onchange="updateColorCalc()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white"></select>
+                        </div>
+                        <div>
+                            <label
+                                class="text-[11px] font-bold uppercase text-slate-400 block mb-1">Multiplicador</label>
+                            <select id="band-3" onchange="updateColorCalc()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white"></select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold uppercase text-slate-400 block mb-1">Tolerancia</label>
+                            <select id="band-4" onchange="updateColorCalc()"
+                                class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white"></select>
+                        </div>
+                    </div>
+
+                    <!-- Botones rápidos para cargar todas las filas del Ejercicio 10 del PDF -->
+                    <div>
+                        <span class="text-xs font-semibold text-amber-400 block mb-2">Haz clic para comprobar cada fila
+                            del Ejercicio 10 (Actividad Feedback):</span>
+                        <div id="ej10-presets" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <!-- Se rellena por JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Condensadores, Bobinas y Resistencias Dependientes -->
+                <div class="lg:col-span-5 space-y-5">
+                    <!-- Calculadora rápida de Condensadores -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+                        <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                            <i class="ph-bold ph-battery-charging text-cyan-400"></i> Condensadores (3.25) y Energía
+                            Almacenada
+                        </h3>
+                        <p class="text-xs text-slate-300">
+                            Almacenan carga eléctrica ($Q = C \cdot V$). Atención: su asociación funciona <strong>al
+                                revés que las resistencias</strong> (en paralelo se suman: $C_T = C_1 + C_2$).
+                        </p>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">Capacidad ($C$ en
+                                    $\mu\text{F}$)</label>
+                                <input type="number" id="cap-c" value="100" oninput="updateCapSim()"
+                                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs font-mono text-white">
+                            </div>
+                            <div>
+                                <label class="text-[11px] text-slate-400 block mb-1">Tensión Trabajo ($V$)</label>
+                                <input type="number" id="cap-v" value="24" oninput="updateCapSim()"
+                                    class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs font-mono text-white">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                                <span class="text-[10px] text-slate-400 block">Carga ($Q = C \cdot V$)</span>
+                                <span id="cap-res-q" class="text-sm font-mono font-bold text-cyan-400">2.40 mC</span>
+                            </div>
+                            <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                                <span class="text-[10px] text-slate-400 block">Energía ($W = \frac{1}{2}CV^2$)</span>
+                                <span id="cap-res-w" class="text-sm font-mono font-bold text-emerald-400">0.0288
+                                    J</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resumen Interactivo de Sensores y Bobinas -->
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3">
+                        <h3 class="font-bold text-white text-sm flex items-center gap-2">
+                            <i class="ph-bold ph-thermometer text-amber-400"></i> Resistencias Dependientes (3.24.3) y
+                            Bobinas (3.26)
+                        </h3>
+                        <div class="space-y-2 text-xs">
+                            <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                                <strong class="text-amber-400">NTC vs PTC:</strong> En una <strong>NTC</strong>, a más
+                                temperatura <em>menos</em> resistencia. En una <strong>PTC</strong> (y en la sonda
+                                metálica <strong>PT-100</strong>), a más temperatura <em>más</em> resistencia.
+                            </div>
+                            <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                                <strong class="text-cyan-400">LDR y VDR (Varistor):</strong> La <strong>LDR</strong>
+                                disminuye su resistencia al recibir más luz (lux). El <strong>VDR</strong> disminuye su
+                                resistencia al subir la tensión (protege contra sobretensiones).
+                            </div>
+                            <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg">
+                                <strong class="text-purple-400">Bobinas (Inductores - Henrios H):</strong> Hilo de cobre
+                                barnizado que genera un campo magnético. <strong>Núcleo de aire</strong> (altas
+                                frecuencias), <strong>Núcleo de hierro</strong> (bajas frecuencias,
+                                motores/transformadores) y <strong>Ferrita</strong> (filtros y fuentes conmutadas).
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- MÓDULO 5: RESOLUCIÓN INTERACTIVA DE LOS 10 EJERCICIOS DEL PDF         -->
+        <!-- ===================================================================== -->
+        <section id="sec-ejercicios" class="tab-content hidden space-y-6">
+            <div
+                class="bg-gradient-to-r from-amber-500/10 via-slate-900 to-slate-900 border border-amber-500/30 rounded-2xl p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                    <span
+                        class="text-xs font-bold uppercase tracking-wider text-amber-400">03_CF16_V0140304_UF1_Actividad_Feedback.pdf</span>
+                    <h2 class="text-xl font-bold text-white mt-0.5">Entrenador Paso a Paso: Los 10 Ejercicios Oficiales
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-1">
+                        Practica por tu cuenta introduciendo tu resultado o despliega el desarrollo matemático completo
+                        con todas las unidades explicadas.
+                    </p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="toggleAllSolutions(true)"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-amber-500 text-slate-950 hover:bg-amber-400 transition">
+                        Mostrar Todas las Soluciones
+                    </button>
+                    <button onclick="toggleAllSolutions(false)"
+                        class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700 transition">
+                        Ocultar Todas
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid de los 10 Ejercicios -->
+            <div id="exercises-container" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Generado dinámicamente por JS -->
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // =========================================================================
+        // NAVEGACIÓN DE PESTAÑAS
+        // =========================================================================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById('sec-' + tabId).classList.remove('hidden');
+
+            document.querySelectorAll('#main-nav .nav-btn').forEach(btn => {
+                btn.className = "nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap text-slate-300 hover:bg-slate-800";
+            });
+            const activeBtn = document.getElementById('tab-' + tabId);
+            if (tabId === 'ejercicios') {
+                activeBtn.className = "nav-btn px-3.5 py-2 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-2 whitespace-nowrap bg-amber-500 text-slate-950 shadow-lg shadow-amber-500/20";
+            } else {
+                activeBtn.className = "nav-btn active px-3.5 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-2 whitespace-nowrap bg-blue-600 text-white shadow-lg shadow-blue-600/30";
+            }
+        }
+
+        // =========================================================================
+        // MÓDULO 1: MATERIALES Y RESISTENCIA DEL CONDUCTOR
+        // =========================================================================
+        function selectMaterialClass(type) {
+            const types = ['conductor', 'aislante', 'semiconductor', 'superconductor'];
+            types.forEach(t => {
+                const card = document.getElementById('mat-card-' + t);
+                if (t === type) {
+                    card.className = "cursor-pointer bg-slate-900 border-2 border-blue-500 rounded-xl p-4 transition-all shadow-lg shadow-blue-500/10";
+                } else {
+                    card.className = "cursor-pointer bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 rounded-xl p-4 transition-all";
+                }
+            });
+
+            const exp = document.getElementById('wire-explanation');
+            if (type === 'conductor') {
+                exp.innerHTML = `<strong>Conductores (Metales como Plata, Cobre, Oro, Aluminio):</strong> Sus átomos ceden los últimos electrones de la corteza con mucha facilidad, permitiendo que circulen por el cable con muy poca resistencia.`;
+            } else if (type === 'aislante') {
+                exp.innerHTML = `<strong>Aislantes (Plástico, Cerámica, Madera, Vidrio):</strong> Sus electrones están fuertemente ligados al núcleo. La resistencia es prácticamente infinita y protegen las instalaciones contra descargas y cortocircuitos.`;
+            } else if (type === 'semiconductor') {
+                exp.innerHTML = `<strong>Semiconductores (Silicio, Germanio):</strong> Base de la electrónica moderna y de los termistores (NTC/PTC) o fotorresistencias (LDR). Su conductividad se controla mediante temperatura, luz o dopado.`;
+            } else if (type === 'superconductor') {
+                exp.innerHTML = `<strong>Superconductores:</strong> A temperaturas cercanas al cero absoluto, su resistencia cae exactamente a <strong>0 Ω</strong>. No hay caída de tensión ($V = I \\cdot 0 = 0$) ni pérdidas de calor por efecto Joule.`;
+            }
+        }
+
+        function syncLengthInput(val) {
+            document.getElementById('num-length').value = val;
+            updateWireSim();
+        }
+        function syncLengthSlider(val) {
+            const num = parseFloat(val) || 0.1;
+            document.getElementById('slider-length').value = Math.min(500, Math.max(0.1, num));
+            updateWireSim();
+        }
+        function syncSectionInput(val) {
+            document.getElementById('num-section').value = val;
+            updateWireSim();
+        }
+        function syncSectionSlider(val) {
+            const num = parseFloat(val) || 0.5;
+            document.getElementById('slider-section').value = Math.min(50, Math.max(0.5, num));
+            updateWireSim();
+        }
+        function setSection(s) {
+            document.getElementById('num-section').value = s;
+            document.getElementById('slider-section').value = s;
+            updateWireSim();
+        }
+
+        function loadPresetVarillaPDF() {
+            // Ejercicio 1 del PDF: Cobre (0.0172), L = 20 cm = 0.2 m, S = 4 mm²
+            document.getElementById('mat-select').value = "0.0172";
+            document.getElementById('num-length').value = 0.2;
+            document.getElementById('slider-length').value = 0.2;
+            document.getElementById('num-section').value = 4;
+            document.getElementById('slider-section').value = 4;
+            document.getElementById('slider-temp').value = 20;
+            updateWireSim();
+        }
+
+        function updateWireSim() {
+            const sel = document.getElementById('mat-select');
+            const rho = parseFloat(sel.value);
+            const obs = sel.options[sel.selectedIndex].getAttribute('data-obs');
+            document.getElementById('mat-obs').textContent = obs;
+
+            const L = Math.max(0.01, parseFloat(document.getElementById('num-length').value) || 0.2);
+            const S = Math.max(0.1, parseFloat(document.getElementById('num-section').value) || 1);
+            const T2 = parseFloat(document.getElementById('slider-temp').value);
+            const alpha = 0.004; // Según página 8 del PDF UAX
+
+            document.getElementById('val-length').textContent = L < 1 ? `${(L * 100).toFixed(0)} cm (${L} m)` : `${L} m`;
+            document.getElementById('val-section').textContent = `${S} mm²`;
+            document.getElementById('val-temp').textContent = `${T2} °C`;
+            document.getElementById('lbl-t2').textContent = T2;
+
+            const R20 = rho * (L / S);
+            const RT2 = R20 * (1 + alpha * (T2 - 20));
+            const G = 1 / RT2;
+            const sigma = 1 / rho;
+
+            // Formateo inteligente para valores muy pequeños (como el Ej. 1 del PDF: 0.00086 Ω)
+            const formatOhm = (val) => {
+                if (val < 0.01) return `${(val * 1000).toFixed(3)} mΩ (${val.toFixed(5)} Ω)`;
+                return `${val.toFixed(4)} Ω`;
+            };
+
+            document.getElementById('res-r20').textContent = formatOhm(R20);
+            document.getElementById('res-rt').textContent = formatOhm(RT2);
+            document.getElementById('res-g').textContent = G > 999 ? `${(G / 1000).toFixed(2)} kS` : `${G.toFixed(2)} S`;
+            document.getElementById('res-sigma').textContent = sigma.toFixed(2);
+
+            // Actualizar geometría SVG del cilindro
+            const visualWidth = Math.min(440, Math.max(90, 80 + Math.log10(L + 1) * 130));
+            const visualRadiusY = Math.min(55, Math.max(12, 10 + Math.sqrt(S) * 6.5));
+            const visualRadiusX = Math.max(6, visualRadiusY * 0.38);
+
+            const startX = 300 - visualWidth / 2;
+            const endX = 300 + visualWidth / 2;
+
+            const body = document.getElementById('wire-body');
+            body.setAttribute('x', startX);
+            body.setAttribute('y', 100 - visualRadiusY);
+            body.setAttribute('width', visualWidth);
+            body.setAttribute('height', visualRadiusY * 2);
+
+            const capL = document.getElementById('wire-cap-left');
+            capL.setAttribute('cx', startX);
+            capL.setAttribute('rx', visualRadiusX);
+            capL.setAttribute('ry', visualRadiusY);
+
+            const capR = document.getElementById('wire-cap-right');
+            capR.setAttribute('cx', endX);
+            capR.setAttribute('rx', visualRadiusX);
+            capR.setAttribute('ry', visualRadiusY);
+
+            // Cota de longitud
+            document.getElementById('dim-line').setAttribute('x1', startX);
+            document.getElementById('dim-line').setAttribute('x2', endX);
+            document.getElementById('dim-left').setAttribute('x1', startX);
+            document.getElementById('dim-left').setAttribute('x2', startX);
+            document.getElementById('dim-right').setAttribute('x1', endX);
+            document.getElementById('dim-right').setAttribute('x2', endX);
+            document.getElementById('svg-length-label').textContent = `l = ${L} m`;
+
+            // Líneas de electrones
+            const e1 = document.getElementById('wire-electrons-1');
+            const e2 = document.getElementById('wire-electrons-2');
+            e1.setAttribute('x1', startX + 10);
+            e1.setAttribute('x2', endX - 10);
+            e1.setAttribute('y1', 100 - visualRadiusY * 0.35);
+            e1.setAttribute('y2', 100 - visualRadiusY * 0.35);
+            e2.setAttribute('x1', startX + 10);
+            e2.setAttribute('x2', endX - 10);
+            e2.setAttribute('y1', 100 + visualRadiusY * 0.35);
+            e2.setAttribute('y2', 100 + visualRadiusY * 0.35);
+
+            const speed = Math.min(3.5, Math.max(0.3, RT2 * 1.5));
+            e1.style.setProperty('--flow-speed', `${speed}s`);
+            e2.style.setProperty('--flow-speed', `${speed}s`);
+
+            const secLbl = document.getElementById('svg-section-label');
+            secLbl.setAttribute('x', endX);
+            secLbl.setAttribute('y', 100 + visualRadiusY + 22);
+            secLbl.textContent = `S = ${S} mm²`;
+
+            const badge = document.getElementById('wire-temp-badge');
+            if (T2 > 50) {
+                badge.className = "text-xs font-mono px-2.5 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30";
+                badge.textContent = `Caliente (${T2} °C) → +${((RT2 / R20 - 1) * 100).toFixed(1)}% R`;
+            } else if (T2 < 10) {
+                badge.className = "text-xs font-mono px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-400 border border-cyan-500/30";
+                badge.textContent = `Frío (${T2} °C) → ${((RT2 / R20 - 1) * 100).toFixed(1)}% R`;
+            } else {
+                badge.className = "text-xs font-mono px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
+                badge.textContent = `Temp. Ambiente (${T2} °C)`;
+            }
+        }
+
+        // =========================================================================
+        // MÓDULO 2: CAÍDA DE TENSIÓN E INTENSIDAD EN LÍNEA
+        // =========================================================================
+        let isShortCircuit = false;
+        let flowDirection = 'conv';
+
+        function setCDTV0(v) {
+            document.getElementById('cdt-v0').value = v;
+            updateCDTSim();
+        }
+
+        function setFlowDirection(dir) {
+            flowDirection = dir;
+            const bConv = document.getElementById('btn-dir-conv');
+            const bReal = document.getElementById('btn-dir-real');
+            const fTop = document.getElementById('cdt-flow-top');
+            const fBot = document.getElementById('cdt-flow-bot');
+
+            if (dir === 'conv') {
+                bConv.className = "text-[11px] px-2.5 py-1 rounded bg-blue-600 text-white font-medium";
+                bReal.className = "text-[11px] px-2.5 py-1 rounded bg-slate-800 text-slate-400 font-medium";
+                fTop.setAttribute('class', 'electron-flow-conv');
+                fBot.setAttribute('class', 'electron-flow-conv');
+            } else {
+                bReal.className = "text-[11px] px-2.5 py-1 rounded bg-blue-600 text-white font-medium";
+                bConv.className = "text-[11px] px-2.5 py-1 rounded bg-slate-800 text-slate-400 font-medium";
+                fTop.setAttribute('class', 'electron-flow-real');
+                fBot.setAttribute('class', 'electron-flow-real');
+            }
+        }
+
+        function toggleShortCircuit() {
+            isShortCircuit = !isShortCircuit;
+            const btn = document.getElementById('btn-shortcircuit');
+            const branch = document.getElementById('svg-shortcircuit-branch');
+            if (isShortCircuit) {
+                btn.className = "text-xs font-bold px-2.5 py-1 rounded-lg bg-rose-600 text-white shadow-lg shadow-rose-600/40 flex items-center gap-1";
+                btn.innerHTML = `<i class="ph-bold ph-arrow-counter-clockwise"></i> Quitar Cortocircuito`;
+                branch.classList.remove('hidden');
+            } else {
+                btn.className = "text-xs font-bold px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-400 border border-rose-500/30 hover:bg-rose-500/25 transition flex items-center gap-1";
+                btn.innerHTML = `<i class="ph-bold ph-warning"></i> Simular Cortocircuito`;
+                branch.classList.add('hidden');
+            }
+            updateCDTSim();
+        }
+
+        function updateCDTSim() {
+            const V0 = parseFloat(document.getElementById('cdt-v0').value);
+            let I = parseFloat(document.getElementById('cdt-i').value);
+            const L = parseFloat(document.getElementById('cdt-l').value);
+            const S = parseFloat(document.getElementById('cdt-s').value);
+            const rho = parseFloat(document.getElementById('cdt-mat').value);
+            const wires = parseFloat(document.getElementById('cdt-wires').value);
+
+            document.getElementById('cdt-val-v0').textContent = `${V0} V`;
+            document.getElementById('cdt-val-l').textContent = `${L} m`;
+            document.getElementById('cdt-val-s').textContent = `${S} mm²`;
+
+            const Rcable = rho * ((L * wires) / S);
+
+            if (isShortCircuit) {
+                // En cortocircuito la resistencia de carga es 0, toda la tensión cae en el propio cable
+                I = V0 / Math.max(0.01, Rcable);
+            }
+            document.getElementById('cdt-val-i').textContent = `${I.toFixed(1)} A`;
+
+            const cdt = Math.min(V0, I * Rcable);
+            const Vfinal = Math.max(0, V0 - cdt);
+            const pctDrop = (cdt / V0) * 100;
+            const Ploss = (I * I) * Rcable;
+            const Pload = Vfinal * I;
+            const J = I / S;
+            // Calor en 1 hora (3600 s) en kcal: E(cal) = 0.24 * P * t
+            const kcalHour = (0.24 * Ploss * 3600) / 1000;
+
+            // Actualizar SVG
+            document.getElementById('svg-cdt-l').textContent = `Longitud Línea L = ${L} m (${wires === 2 ? 'Ida y vuelta' : '1 hilo'})`;
+            document.getElementById('svg-cdt-v0').textContent = `${V0} V`;
+            document.getElementById('svg-cdt-i').textContent = `I = ${I.toFixed(1)} A`;
+            document.getElementById('svg-cdt-rcable').textContent = `R_cable = ${Rcable.toFixed(3)} Ω`;
+            document.getElementById('svg-cdt-drop').textContent = `c.d.t. = ${cdt.toFixed(2)} V`;
+            document.getElementById('svg-cdt-vload').textContent = `${Vfinal.toFixed(1)} V`;
+            document.getElementById('svg-cdt-pload').textContent = isShortCircuit ? `0 W (Anulada)` : `${Pload.toFixed(0)} W`;
+
+            // Velocidad animación según intensidad
+            const flowSpeed = Math.max(0.15, Math.min(2.5, 18 / Math.max(1, I)));
+            document.getElementById('cdt-flow-top').style.setProperty('--flow-speed', `${flowSpeed}s`);
+            document.getElementById('cdt-flow-bot').style.setProperty('--flow-speed', `${flowSpeed}s`);
+
+            // Métricas inferiores
+            document.getElementById('metric-cdt').textContent = `${cdt.toFixed(2)} V`;
+            document.getElementById('metric-cdt-pct').textContent = `${pctDrop.toFixed(2)}% de V₀`;
+            document.getElementById('metric-vfinal').textContent = `${Vfinal.toFixed(2)} V`;
+            document.getElementById('metric-ploss').textContent = Ploss > 9999 ? `${(Ploss / 1000).toFixed(1)} kW` : `${Ploss.toFixed(1)} W`;
+            document.getElementById('metric-j').textContent = `${J.toFixed(2)} A/mm²`;
+            document.getElementById('metric-kcal').textContent = `${kcalHour.toFixed(1)} kcal`;
+
+            // Estado visual de la línea
+            const badge = document.getElementById('cdt-status-badge');
+            const wireTop = document.getElementById('cdt-wire-top');
+            if (isShortCircuit) {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-rose-600 text-white animate-pulse";
+                badge.textContent = `¡CORTOCIRCUITO! I = ${I.toFixed(0)} A (Peligro térmico extremo)`;
+                wireTop.setAttribute('stroke', '#ef4444');
+            } else if (pctDrop > 5) {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30";
+                badge.textContent = `Caída excesiva (${pctDrop.toFixed(1)}%) · ¡Aumenta la sección S!`;
+                wireTop.setAttribute('stroke', '#f97316');
+            } else {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30";
+                badge.textContent = `Línea Eficiente (Caída del ${pctDrop.toFixed(2)}%)`;
+                wireTop.setAttribute('stroke', '#f59e0b');
+            }
+        }
+
+        // =========================================================================
+        // MÓDULO 3: CIRCUITOS, DIVISOR DE TENSIÓN Y WHEATSTONE
+        // =========================================================================
+        let spMode = 'serie';
+
+        function switchCircuitSub(sub) {
+            ['sp', 'divisor', 'wheatstone'].forEach(s => {
+                document.getElementById('sub-' + s).classList.add('hidden');
+                document.getElementById('subbtn-' + s).className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700";
+            });
+            document.getElementById('sub-' + sub).classList.remove('hidden');
+            document.getElementById('subbtn-' + sub).className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 text-white";
+        }
+
+        function setSPMode(mode) {
+            spMode = mode;
+            const bSerie = document.getElementById('btn-mode-serie');
+            const bPar = document.getElementById('btn-mode-paralelo');
+            const banner = document.getElementById('sp-rule-banner');
+
+            if (mode === 'serie') {
+                bSerie.className = "py-2 rounded-xl text-xs font-bold bg-blue-600 text-white border border-blue-500";
+                bPar.className = "py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700";
+                banner.innerHTML = `<strong>Regla de Oro en SERIE (3.14):</strong> Todas las resistencias son recorridas por la <strong>misma intensidad ($I$)</strong>. La tensión total es la suma de las caídas parciales ($V_T = V_1 + V_2 + V_3$).`;
+            } else {
+                bPar.className = "py-2 rounded-xl text-xs font-bold bg-blue-600 text-white border border-blue-500";
+                bSerie.className = "py-2 rounded-xl text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700";
+                banner.innerHTML = `<strong>Regla de Oro en PARALELO (3.15):</strong> Todas las resistencias están sometidas a la <strong>misma tensión ($V$)</strong>. La intensidad total se reparte por cada rama ($I_T = I_1 + I_2 + I_3$).`;
+            }
+            updateSPSim();
+        }
+
+        function loadPresetEj6PDF() {
+            setSPMode('serie');
+            document.getElementById('sp-v').value = 100;
+            document.getElementById('sp-r1').value = 100;
+            document.getElementById('sp-r2').value = 50;
+            document.getElementById('sp-r3').value = 150;
+            updateSPSim();
+        }
+
+        function updateSPSim() {
+            const V = parseFloat(document.getElementById('sp-v').value);
+            const R1 = parseFloat(document.getElementById('sp-r1').value);
+            const R2 = parseFloat(document.getElementById('sp-r2').value);
+            const R3 = parseFloat(document.getElementById('sp-r3').value);
+
+            document.getElementById('sp-val-v').textContent = `${V} V`;
+            document.getElementById('sp-val-r1').textContent = `${R1} Ω`;
+            document.getElementById('sp-val-r2').textContent = `${R2} Ω`;
+            document.getElementById('sp-val-r3').textContent = `${R3} Ω`;
+
+            let Req, IT, PT, rows = [];
+            if (spMode === 'serie') {
+                Req = R1 + R2 + R3;
+                IT = V / Req;
+                PT = V * IT;
+                [R1, R2, R3].forEach((r, idx) => {
+                    const vi = IT * r;
+                    const pi = vi * IT;
+                    rows.push({ name: `R_${idx + 1}`, r, v: vi, i: IT, p: pi });
+                });
+            } else {
+                Req = 1 / ((1 / R1) + (1 / R2) + (1 / R3));
+                IT = V / Req;
+                PT = V * IT;
+                [R1, R2, R3].forEach((r, idx) => {
+                    const ii = V / r;
+                    const pi = V * ii;
+                    rows.push({ name: `R_${idx + 1}`, r, v: V, i: ii, p: pi });
+                });
+            }
+
+            document.getElementById('sp-req').textContent = `${Req.toFixed(2)} Ω`;
+            document.getElementById('sp-it').textContent = `${IT.toFixed(3)} A`;
+            document.getElementById('sp-pt').textContent = `${PT.toFixed(2)} W`;
+
+            const tbody = document.getElementById('sp-table-body');
+            tbody.innerHTML = rows.map(item => `
+                <tr class="hover:bg-slate-800/40">
+                    <td class="py-2.5 px-3 font-bold text-white">${item.name}</td>
+                    <td class="py-2.5 px-3 text-slate-300">${item.r.toFixed(0)} Ω</td>
+                    <td class="py-2.5 px-3 text-amber-400 font-bold">${item.v.toFixed(2)} V</td>
+                    <td class="py-2.5 px-3 text-cyan-400 font-bold">${item.i.toFixed(3)} A</td>
+                    <td class="py-2.5 px-3 text-emerald-400 font-bold">${item.p.toFixed(2)} W</td>
+                </tr>
+            `).join('');
+        }
+
+        // Divisor de Tensión (Ej. 8)
+        function loadPresetEj8PDF() {
+            document.getElementById('div-vin').value = 24;
+            document.getElementById('div-r1').value = 270;
+            document.getElementById('div-r2').value = 100;
+            document.getElementById('div-pmax').value = 500;
+            document.getElementById('div-pcur').max = 500;
+            document.getElementById('div-pcur').value = 500;
+            updateDivisorSim();
+        }
+
+        function updateDivisorSim() {
+            const Vin = parseFloat(document.getElementById('div-vin').value) || 0;
+            const R1 = Math.max(1, parseFloat(document.getElementById('div-r1').value) || 1);
+            const R2 = Math.max(0, parseFloat(document.getElementById('div-r2').value) || 0);
+            const Pmax = Math.max(1, parseFloat(document.getElementById('div-pmax').value) || 1);
+
+            const sliderP = document.getElementById('div-pcur');
+            sliderP.max = Pmax;
+            const Pcur = Math.min(Pmax, parseFloat(sliderP.value) || 0);
+            document.getElementById('div-val-pcur').textContent = `${Pcur} Ω`;
+
+            const Vmin = Vin * (R2 / (R1 + R2));
+            const Vmax = Vin * ((R2 + Pmax) / (R1 + R2 + Pmax));
+            const Vnow = Vin * ((R2 + Pcur) / (R1 + R2 + Pcur));
+            const Inow = Vin / (R1 + R2 + Pcur);
+
+            document.getElementById('div-vmin').textContent = `${Vmin.toFixed(2)} V`;
+            document.getElementById('div-vmax').textContent = `${Vmax.toFixed(2)} V`;
+            document.getElementById('div-vnow').textContent = `${Vnow.toFixed(2)} V`;
+            document.getElementById('div-inow').textContent = `I = ${(Inow * 1000).toFixed(1)} mA`;
+        }
+
+        // Puente de Wheatstone (Ej. 9)
+        function loadPresetEj9PDF() {
+            document.getElementById('wh-vin').value = 24;
+            document.getElementById('wh-r').value = 100;
+            document.getElementById('wh-temp').value = 146;
+            updateWheatstoneSim();
+        }
+
+        function updateWheatstoneSim() {
+            const Vin = parseFloat(document.getElementById('wh-vin').value) || 24;
+            const R = Math.max(1, parseFloat(document.getElementById('wh-r').value) || 100);
+            const T = parseFloat(document.getElementById('wh-temp').value) || 0;
+            const alpha = parseFloat(document.getElementById('wh-alpha').value);
+
+            document.getElementById('wh-val-temp').textContent = `${T} °C`;
+
+            // PT-100: R0 = 100 Ω a 0°C
+            const Rx = 100 * (1 + alpha * T);
+            const Va = Vin * (R / (R + R));
+            const Vb = Vin * (Rx / (R + Rx));
+            const Vout = Math.abs(Vb - Va);
+
+            document.getElementById('wh-rx').textContent = `${Rx.toFixed(2)} Ω`;
+            document.getElementById('wh-va').textContent = `${Va.toFixed(2)} V`;
+            document.getElementById('wh-vb').textContent = `${Vb.toFixed(2)} V`;
+            document.getElementById('wh-vout').textContent = `${Vout.toFixed(2)} V`;
+
+            document.getElementById('wh-steps').innerHTML = `
+                <div class="text-amber-400 font-bold">Cálculo detallado en tiempo real (T = ${T} °C):</div>
+                <div>1) Resistencia PT-100: R_x = 100 · [1 + ${alpha} · (${T} - 0)] = <strong>${Rx.toFixed(2)} Ω</strong></div>
+                <div>2) Rama izquierda (R₁ y R₂ iguales de ${R} Ω): V_a = ${Vin}V · (${R} / ${R + R}) = <strong>${Va.toFixed(2)} V</strong></div>
+                <div>3) Rama derecha (R₃ = ${R} Ω y R_x = ${Rx.toFixed(2)} Ω): V_b = ${Vin}V · (${Rx.toFixed(2)} / ${(R + Rx).toFixed(2)}) = <strong>${Vb.toFixed(2)} V</strong></div>
+                <div>4) Tensión diferencial del puente: V_out = |V_b - V_a| = |${Vb.toFixed(2)} - ${Va.toFixed(2)}| = <strong class="text-emerald-400">${Vout.toFixed(2)} V</strong></div>
+            `;
+        }
+
+        // =========================================================================
+        // MÓDULO 4: CÓDIGO DE COLORES (4 BANDAS) Y CONDENSADORES
+        // =========================================================================
+        const COLOR_DATA = [
+            { key: 'negro', name: 'Negro (0)', digit: 0, mult: 1, hex: '#18181b' },
+            { key: 'marron', name: 'Marrón (1)', digit: 1, mult: 10, tol: 1, hex: '#78350f' },
+            { key: 'rojo', name: 'Rojo (2)', digit: 2, mult: 100, tol: 2, hex: '#dc2626' },
+            { key: 'naranja', name: 'Naranja (3)', digit: 3, mult: 1000, hex: '#f97316' },
+            { key: 'amarillo', name: 'Amarillo (4)', digit: 4, mult: 10000, hex: '#facc15' },
+            { key: 'verde', name: 'Verde (5)', digit: 5, mult: 100000, tol: 0.5, hex: '#16a34a' },
+            { key: 'azul', name: 'Azul (6)', digit: 6, mult: 1000000, tol: 0.25, hex: '#2563eb' },
+            { key: 'violeta', name: 'Violeta (7)', digit: 7, mult: 10000000, tol: 0.1, hex: '#7c3aed' },
+            { key: 'gris', name: 'Gris (8)', digit: 8, mult: 100000000, hex: '#64748b' },
+            { key: 'blanco', name: 'Blanco (9)', digit: 9, mult: 1000000000, hex: '#f8fafc' },
+            { key: 'oro', name: 'Oro (±5%)', digit: null, mult: 0.1, tol: 5, hex: '#eab308' },
+            { key: 'plata', name: 'Plata (±10%)', digit: null, mult: 0.01, tol: 10, hex: '#cbd5e1' }
+        ];
+
+        const EJ10_ROWS = [
+            { b1: 'naranja', b2: 'naranja', b3: 'marron', b4: 'oro', label: 'Ejemplo: Naranja - Naranja - Marrón - Oro' },
+            { b1: 'rojo', b2: 'rojo', b3: 'rojo', b4: 'oro', label: 'Fila 2: Rojo - Rojo - Rojo - Oro' },
+            { b1: 'marron', b2: 'verde', b3: 'naranja', b4: 'rojo', label: 'Fila 3: Marrón - Verde - Naranja - Rojo' },
+            { b1: 'amarillo', b2: 'violeta', b3: 'rojo', b4: 'marron', label: 'Fila 4: Amarillo - Violeta - Rojo - Marrón' },
+            { b1: 'marron', b2: 'negro', b3: 'naranja', b4: 'oro', label: 'Fila 5: Marrón - Negro - Naranja - Oro' },
+            { b1: 'amarillo', b2: 'rojo', b3: 'naranja', b4: 'plata', label: 'Fila 6: Amarillo - Rojo - Naranja - Plata' },
+            { b1: 'marron', b2: 'negro', b3: 'rojo', b4: 'rojo', label: 'Fila 7: Marrón - Negro - Rojo - Rojo' },
+            { b1: 'verde', b2: 'azul', b3: 'negro', b4: 'rojo', label: 'Fila 8: Verde - Azul - Negro - Rojo' },
+            { b1: 'violeta', b2: 'azul', b3: 'amarillo', b4: 'marron', label: 'Fila 9: Violeta - Azul - Amarillo - Marrón' },
+            { b1: 'rojo', b2: 'azul', b3: 'naranja', b4: 'rojo', label: 'Fila 10: Rojo - Azul - Naranja - Rojo' },
+            { b1: 'blanco', b2: 'gris', b3: 'rojo', b4: 'marron', label: 'Fila 11: Blanco - Gris - Rojo - Marrón' }
+        ];
+
+        function initColorCalculator() {
+            const s1 = document.getElementById('band-1');
+            const s2 = document.getElementById('band-2');
+            const s3 = document.getElementById('band-3');
+            const s4 = document.getElementById('band-4');
+
+            s1.innerHTML = COLOR_DATA.filter(c => c.digit !== null && c.digit > 0).map(c => `<option value="${c.key}">${c.name}</option>`).join('');
+            s2.innerHTML = COLOR_DATA.filter(c => c.digit !== null).map(c => `<option value="${c.key}">${c.name}</option>`).join('');
+            s3.innerHTML = COLOR_DATA.filter(c => c.mult !== undefined).map(c => `<option value="${c.key}">${c.key.toUpperCase()} (×${c.mult})</option>`).join('');
+            s4.innerHTML = COLOR_DATA.filter(c => c.tol !== undefined).map(c => `<option value="${c.key}">${c.key.toUpperCase()} (±${c.tol}%)</option>`).join('');
+
+            // Renderizar botones del Ejercicio 10
+            const container = document.getElementById('ej10-presets');
+            container.innerHTML = EJ10_ROWS.map((r, i) => `
+                <button onclick="setResistorBands('${r.b1}','${r.b2}','${r.b3}','${r.b4}')" class="text-left text-xs px-3 py-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 flex items-center justify-between transition">
+                    <span class="truncate pr-2">${r.label}</span>
+                    <i class="ph-bold ph-arrow-right text-blue-400 shrink-0"></i>
+                </button>
+            `).join('');
+
+            setResistorBands('naranja', 'naranja', 'marron', 'oro');
+        }
+
+        function setResistorBands(b1, b2, b3, b4) {
+            document.getElementById('band-1').value = b1;
+            document.getElementById('band-2').value = b2;
+            document.getElementById('band-3').value = b3;
+            document.getElementById('band-4').value = b4;
+            updateColorCalc();
+        }
+
+        function updateColorCalc() {
+            const c1 = COLOR_DATA.find(c => c.key === document.getElementById('band-1').value);
+            const c2 = COLOR_DATA.find(c => c.key === document.getElementById('band-2').value);
+            const c3 = COLOR_DATA.find(c => c.key === document.getElementById('band-3').value);
+            const c4 = COLOR_DATA.find(c => c.key === document.getElementById('band-4').value);
+
+            document.getElementById('svg-band-1').setAttribute('fill', c1.hex);
+            document.getElementById('svg-band-2').setAttribute('fill', c2.hex);
+            document.getElementById('svg-band-3').setAttribute('fill', c3.hex);
+            document.getElementById('svg-band-4').setAttribute('fill', c4.hex);
+
+            const baseVal = (c1.digit * 10 + c2.digit) * c3.mult;
+            const tol = c4.tol;
+
+            let formatted = `${baseVal} Ω`;
+            if (baseVal >= 1000000) {
+                formatted = `${(baseVal / 1000000).toLocaleString('es-ES')} MΩ (${baseVal.toLocaleString('es-ES')} Ω)`;
+            } else if (baseVal >= 1000) {
+                formatted = `${(baseVal / 1000).toLocaleString('es-ES')} kΩ (${baseVal.toLocaleString('es-ES')} Ω)`;
+            }
+
+            const minR = baseVal * (1 - tol / 100);
+            const maxR = baseVal * (1 + tol / 100);
+
+            document.getElementById('color-res-main').textContent = `${formatted} ± ${tol}%`;
+            document.getElementById('color-res-range').textContent = `Rango entre ${minR.toFixed(1)} Ω y ${maxR.toFixed(1)} Ω`;
+        }
+
+        function updateCapSim() {
+            const cMicro = parseFloat(document.getElementById('cap-c').value) || 0;
+            const v = parseFloat(document.getElementById('cap-v').value) || 0;
+            const cFarad = cMicro * 1e-6;
+            const qMilli = (cFarad * v) * 1000;
+            const wJoules = 0.5 * cFarad * v * v;
+
+            document.getElementById('cap-res-q').textContent = `${qMilli.toFixed(2)} mC`;
+            document.getElementById('cap-res-w').textContent = `${wJoules.toFixed(4)} J`;
+        }
+
+        // =========================================================================
+        // MÓDULO 5: LOS 10 EJERCICIOS OFICIALES DEL PDF DE FEEDBACK
+        // =========================================================================
+        const PDF_EXERCISES = [
+            {
+                num: 1,
+                title: "Resistencia de una varilla de cobre",
+                statement: "Calcula la resistencia eléctrica que presenta una varilla de cobre de resistividad ρ = 0,0172 Ω·mm²/m de 20 cm de longitud y 4 mm² de sección.",
+                hint: "Pasa primero los 20 cm a metros (l = 0,2 m) y aplica R = ρ · (l / S).",
+                checkVal: 0.00086,
+                unit: "Ω",
+                simTab: "materiales",
+                solutionHTML: `
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li>• Conversión de unidades: $l = 20\\text{ cm} = 0,2\\text{ m}$ | $S = 4\\text{ mm}^2$</li>
+                        <li>• Fórmula: $R = \\rho \\cdot \\frac{l}{S} = 0,0172 \\cdot \\frac{0,2}{4}$</li>
+                        <li class="text-emerald-400 font-bold">• Resultado: R = 0,00086 Ω (o 0,86 mΩ)</li>
+                    </ul>
+                `
+            },
+            {
+                num: 2,
+                title: "Ley de Ohm, Potencia y Efecto Joule",
+                statement: "Una resistencia tiene un valor de 100 Ω y es atravesada por una corriente de intensidad 20 mA. Calcular: a) La tensión en bornes. b) La potencia que consume. c) El calor producido durante 20 s en calorías.",
+                hint: "Pasa 20 mA a Amperios (0,02 A). Luego V = I·R, P = V·I y E(cal) = 0,24 · P · t.",
+                checkVal: 2,
+                unit: "V (Apartado a)",
+                solutionHTML: `
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li>• Datos: $R = 100\\,\\Omega$, $I = 20\\text{ mA} = 0,02\\text{ A}$, $t = 20\\text{ s}$</li>
+                        <li class="text-emerald-400 font-bold">• a) Tensión: $V = I \\cdot R = 0,02\\text{ A} \\cdot 100\\,\\Omega = 2\\text{ V}$</li>
+                        <li class="text-emerald-400 font-bold">• b) Potencia: $P = V \\cdot I = 2\\text{ V} \\cdot 0,02\\text{ A} = 0,04\\text{ W}$ (40 mW)</li>
+                        <li class="text-emerald-400 font-bold">• c) Calor: $E(J) = P \\cdot t = 0,04 \\cdot 20 = 0,8\\text{ J} \\rightarrow E(\\text{cal}) = 0,24 \\cdot 0,8 = 0,192\\text{ cal}$</li>
+                    </ul>
+                `
+            },
+            {
+                num: 3,
+                title: "Energía de un brasero eléctrico",
+                statement: "Calcula la energía consumida en kWh por un brasero eléctrico que se conecta a una tensión de 230 V si su resistencia es de 10 Ω y está funcionando durante 8 horas. Averigua también la energía calorífica en kcal.",
+                hint: "Calcula la potencia P = V² / R = 230² / 10 = 5290 W (5,29 kW). Luego multiplica por 8 horas.",
+                checkVal: 42.32,
+                unit: "kWh",
+                solutionHTML: `
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li>• 1) Potencia: $P = \\frac{V^2}{R} = \\frac{230^2}{10} = \\frac{52900}{10} = 5290\\text{ W} = 5,29\\text{ kW}$</li>
+                        <li class="text-emerald-400 font-bold">• 2) Energía en kWh: $E = P \\cdot t = 5,29\\text{ kW} \\cdot 8\\text{ h} = 42,32\\text{ kWh}$</li>
+                        <li>• 3) Conversión a Julios: $42,32\\text{ kWh} \\cdot 3.600.000\\text{ J/kWh} = 152.352.000\\text{ J}$</li>
+                        <li class="text-emerald-400 font-bold">• 4) Energía en kcal: $E(\\text{kcal}) = \\frac{0,24 \\cdot 152.352.000}{1000} = 36.564,48\\text{ kcal}$</li>
+                    </ul>
+                `
+            },
+            {
+                num: 4,
+                title: "Variación de la resistencia con la temperatura",
+                statement: "La resistencia a 20 °C de una bobina de cobre es de 8 Ω. Calcula la resistencia de la misma bobina a 70 °C (α = 0,004 °C⁻¹).",
+                hint: "Usa R_T2 = R_T1 · [1 + α · (70 - 20)]. El incremento de temperatura Δt es 50 °C.",
+                checkVal: 9.6,
+                unit: "Ω",
+                solutionHTML: `
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li>• Salto térmico: $\\Delta t = 70\\text{ °C} - 20\\text{ °C} = 50\\text{ °C}$</li>
+                        <li>• Fórmula: $R_{70} = R_{20} \\cdot (1 + \\alpha \\cdot \\Delta t) = 8 \\cdot (1 + 0,004 \\cdot 50)$</li>
+                        <li>• $R_{70} = 8 \\cdot (1 + 0,2) = 8 \\cdot 1,2$</li>
+                        <li class="text-emerald-400 font-bold">• Resultado: R_70 = 9,6 Ω</li>
+                    </ul>
+                `
+            },
+            {
+                num: 5,
+                title: "Placa de características de una estufa eléctrica",
+                statement: "En una estufa eléctrica se indican: Tensión 230 V, potencia 4000 W. Calcular: a) Su resistencia eléctrica y la intensidad que consume. b) La energía en kWh tras funcionar 6 horas diarias durante un mes (30 días). c) El calor producido en kcal.",
+                hint: "I = P / V = 4000 / 230. R = V² / P = 230² / 4000.",
+                checkVal: 13.225,
+                unit: "Ω (Resistencia a)",
+                solutionHTML: `
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li class="text-emerald-400 font-bold">• a) Intensidad: $I = \\frac{P}{V} = \\frac{4000}{230} = 17,39\\text{ A}$ | Resistencia: $R = \\frac{V^2}{P} = \\frac{230^2}{4000} = 13,225\\,\\Omega$</li>
+                        <li class="text-emerald-400 font-bold">• b) Si son 6 h/día en 30 días (180 h): $E = 4\\text{ kW} \\cdot 180\\text{ h} = 720\\text{ kWh}$ <span class="text-slate-400">(Si son 6 h en total al mes: $4\\text{ kW} \\cdot 6\\text{ h} = 24\\text{ kWh}$)</span></li>
+                        <li class="text-emerald-400 font-bold">• c) Calor (180 h): $720\\text{ kWh} \\cdot 864\\text{ kcal/kWh} = 622.080\\text{ kcal}$ <span class="text-slate-400">(Para 6 h totales: $20.736\\text{ kcal}$)</span></li>
+                    </ul>
+                `
+            },
+            {
+                num: 6,
+                title: "Acoplamiento de tres resistencias en serie",
+                statement: "Si se conectan en serie tres resistencias de 100 Ω, 50 Ω y 150 Ω a una red de 100 V, determinar la intensidad, tensiones y potencia de cada resistencia, así como la resistencia total equivalente y la potencia total.",
+                hint: "Suma las tres resistencias (R_T = 300 Ω) y divide 100 V / 300 Ω para hallar I = 0,333 A.",
+                checkVal: 300,
+                unit: "Ω (R_eq)",
+                solutionHTML: `
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li class="text-emerald-400 font-bold">• Resistencia Equivalente: $R_{eq} = 100 + 50 + 150 = 300\\,\\Omega$</li>
+                        <li class="text-emerald-400 font-bold">• Intensidad común: $I = \\frac{100\\text{ V}}{300\\,\\Omega} = 0,333\\text{ A}$</li>
+                        <li>• Tensiones parciales: $V_1 = 33,33\\text{ V}$ | $V_2 = 16,67\\text{ V}$ | $V_3 = 50,00\\text{ V}$ (Suma = 100 V)</li>
+                        <li>• Potencias parciales: $P_1 = 11,11\\text{ W}$ | $P_2 = 5,56\\text{ W}$ | $P_3 = 16,67\\text{ W}$</li>
+                        <li class="text-emerald-400 font-bold">• Potencia Total: $P_T = 100\\text{ V} \\cdot 0,333\\text{ A} = 33,33\\text{ W}$</li>
+                    </ul>
+                `
+            },
+            {
+                num: 7,
+                title: "Circuito Mixto entre A y B (250 V)",
+                statement: "Determinar la resistencia equivalente, la intensidad y la potencia total del circuito mixto de la figura (rama superior: 40 Ω en serie con el paralelo de 30 Ω y 60 Ω; todo ello en paralelo con una rama inferior de 30 Ω), si la tensión entre A y B es de 250 V.",
+                hint: "1º Paralelo de 30 Ω y 60 Ω = 20 Ω. 2º Serie con 40 Ω = 60 Ω. 3º Paralelo de 60 Ω con la rama inferior de 30 Ω = 20 Ω.",
+                checkVal: 20,
+                unit: "Ω (R_eq)",
+                solutionHTML: `
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li>• Paso 1 (Paralelo superior 30 Ω || 60 Ω): $R_{p1} = \\frac{30 \\cdot 60}{30 + 60} = \\frac{1800}{90} = 20\\,\\Omega$</li>
+                        <li>• Paso 2 (Rama superior completa): $R_{sup} = 40\\,\\Omega + 20\\,\\Omega = 60\\,\\Omega$</li>
+                        <li class="text-emerald-400 font-bold">• Paso 3 ($R_{eq}$ total: 60 Ω || 30 Ω inferior): $R_{eq} = \\frac{60 \\cdot 30}{60 + 30} = 20\\,\\Omega$</li>
+                        <li class="text-emerald-400 font-bold">• Intensidad Total: $I_T = \\frac{250\\text{ V}}{20\\,\\Omega} = 12,5\\text{ A}$</li>
+                        <li class="text-emerald-400 font-bold">• Potencia Total: $P_T = 250\\text{ V} \\cdot 12,5\\text{ A} = 3125\\text{ W}$ (3,125 kW)</li>
+                    </ul>
+                `
+            },
+            {
+                num: 8,
+                title: "Rango de V_out en Divisor de Tensión con Potenciómetro",
+                statement: "Para el divisor de tensión, calcula entre qué dos valores obtenemos V_out para el caso: V_in = 24 V, R₁ = 270 Ω, R₂ = 100 Ω y P = 500 Ω.",
+                hint: "Calcula V_out cuando el potenciómetro vale P = 0 Ω (mínimo) y cuando vale P = 500 Ω (máximo).",
+                checkVal: 6.49,
+                unit: "V (V_out mínimo)",
+                solutionHTML: `
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li>• <strong>Caso 1 (Mínimo, con P = 0 Ω):</strong> $R_{total} = 270 + 100 = 370\\,\\Omega$</li>
+                        <li class="text-emerald-400 font-bold">  $V_{out(\\min)} = 24\\text{ V} \\cdot \\frac{100}{370} = 6,49\\text{ V}$</li>
+                        <li>• <strong>Caso 2 (Máximo, con P = 500 Ω):</strong> $R_{inf} = 100 + 500 = 600\\,\\Omega \\rightarrow R_{total} = 270 + 600 = 870\\,\\Omega$</li>
+                        <li class="text-emerald-400 font-bold">  $V_{out(\\max)} = 24\\text{ V} \\cdot \\frac{600}{870} = 16,55\\text{ V}$</li>
+                    </ul>
+                `
+            },
+            {
+                num: 9,
+                title: "Puente de Wheatstone con PT-100 a 146 °C",
+                statement: "Para el puente de Wheatstone, calcula V_out si Rx es una PT-100 para una temperatura de 146 °C si V_in = 24 V; R₁ = R₃ = 100 Ω y R₂ = 100 Ω.",
+                hint: "A 0 °C una PT-100 mide 100 Ω. Calcula Rx a 146 °C y resta las tensiones de las dos ramas divisorias.",
+                checkVal: 2.63,
+                unit: "V (con α DIN = 0.00385)",
+                solutionHTML: `
+                    <ul class="space-y-1 text-xs font-mono">
+                        <li>• Tensión rama izquierda ($R_1=R_2=100\\,\\Omega$): $V_a = 24 \\cdot \\frac{100}{200} = 12\\text{ V}$</li>
+                        <li>• <strong>Opción A (Norma DIN $\\alpha = 0,00385$):</strong> $R_x = 100 \\cdot (1 + 0,00385 \\cdot 146) = 156,21\\,\\Omega$</li>
+                        <li class="text-emerald-400 font-bold">  $V_b = 24 \\cdot \\frac{156,21}{100 + 156,21} = 14,63\\text{ V} \\rightarrow |V_{out}| = 14,63 - 12 = 2,63\\text{ V}$</li>
+                        <li>• <strong>Opción B (Con $\\alpha = 0,004$):</strong> $R_x = 100 \\cdot (1 + 0,004 \\cdot 146) = 158,4\\,\\Omega$</li>
+                        <li class="text-emerald-400 font-bold">  $V_b = 24 \\cdot \\frac{158,4}{258,4} = 14,71\\text{ V} \\rightarrow |V_{out}| = 14,71 - 12 = 2,71\\text{ V}$</li>
+                    </ul>
+                `
+            },
+            {
+                num: 10,
+                title: "Tabla completa de Resistencias por Código de Colores (4 Bandas)",
+                statement: "Calcula el valor óhmico y tolerancia de todas las resistencias de 4 bandas de la tabla del Ejercicio 10.",
+                hint: "Usa las dos primeras bandas como dígitos, la tercera como número de ceros y la cuarta como tolerancia (Oro ±5%, Plata ±10%, Marrón ±1%, Rojo ±2%).",
+                checkVal: 2200,
+                unit: "Ω (1ª fila a resolver: Rojo-Rojo-Rojo-Oro)",
+                solutionHTML: `
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] font-mono">
+                        <div>1) Naranja-Naranja-Marrón-Oro: <strong class="text-emerald-400">330 Ω ± 5%</strong></div>
+                        <div>2) Rojo-Rojo-Rojo-Oro: <strong class="text-emerald-400">2.200 Ω (2,2 kΩ) ± 5%</strong></div>
+                        <div>3) Marrón-Verde-Naranja-Rojo: <strong class="text-emerald-400">15.000 Ω (15 kΩ) ± 2%</strong></div>
+                        <div>4) Amarillo-Violeta-Rojo-Marrón: <strong class="text-emerald-400">4.700 Ω (4,7 kΩ) ± 1%</strong></div>
+                        <div>5) Marrón-Negro-Naranja-Oro: <strong class="text-emerald-400">10.000 Ω (10 kΩ) ± 5%</strong></div>
+                        <div>6) Amarillo-Rojo-Naranja-Plata: <strong class="text-emerald-400">42.000 Ω (42 kΩ) ± 10%</strong></div>
+                        <div>7) Marrón-Negro-Rojo-Rojo: <strong class="text-emerald-400">1.000 Ω (1 kΩ) ± 2%</strong></div>
+                        <div>8) Verde-Azul-Negro-Rojo: <strong class="text-emerald-400">56 Ω ± 2%</strong></div>
+                        <div>9) Violeta-Azul-Amarillo-Marrón: <strong class="text-emerald-400">760.000 Ω (760 kΩ) ± 1%</strong></div>
+                        <div>10) Rojo-Azul-Naranja-Rojo: <strong class="text-emerald-400">26.000 Ω (26 kΩ) ± 2%</strong></div>
+                        <div>11) Blanco-Gris-Rojo-Marrón: <strong class="text-emerald-400">9.800 Ω (9,8 kΩ) ± 1%</strong></div>
+                    </div>
+                `
+            }
+        ];
+
+        function renderExercises() {
+            const container = document.getElementById('exercises-container');
+            container.innerHTML = PDF_EXERCISES.map(ex => `
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-col justify-between space-y-4">
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Ejercicio ${ex.num}</span>
+                            <span class="text-[11px] text-slate-400 font-mono">Puntuación: 2 pts</span>
+                        </div>
+                        <h3 class="font-bold text-white text-base">${ex.title}</h3>
+                        <p class="text-xs text-slate-300 leading-relaxed">${ex.statement}</p>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-slate-800">
+                        <!-- Comprobador rápido de respuesta -->
+                        <div class="flex flex-wrap items-center gap-2">
+                            <input type="number" step="any" id="ans-input-${ex.num}" placeholder="Tu resultado (${ex.unit})" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-blue-500">
+                            <button onclick="checkExerciseAnswer(${ex.num}, ${ex.checkVal})" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-600 hover:bg-blue-500 text-white transition">
+                                Comprobar
+                            </button>
+                            <button onclick="toggleSingleSolution(${ex.num})" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-amber-300 transition">
+                                Ver Paso a Paso
+                            </button>
+                        </div>
+                        <div id="ans-feedback-${ex.num}" class="text-xs hidden"></div>
+                        <div class="text-[11px] text-slate-400 italic">💡 Pista: ${ex.hint}</div>
+
+                        <!-- Solución desplegable -->
+                        <div id="sol-box-${ex.num}" class="hidden bg-slate-950 border border-emerald-500/30 rounded-xl p-3.5">
+                            ${ex.solutionHTML}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function checkExerciseAnswer(num, target) {
+            const val = parseFloat(document.getElementById('ans-input-' + num).value);
+            const fb = document.getElementById('ans-feedback-' + num);
+            fb.classList.remove('hidden');
+
+            if (isNaN(val)) {
+                fb.className = "text-xs text-amber-400 font-medium";
+                fb.textContent = "Introduce un valor numérico para comprobarlo.";
+                return;
+            }
+
+            const errorPct = Math.abs((val - target) / target);
+            if (errorPct < 0.05) {
+                fb.className = "text-xs text-emerald-400 font-bold";
+                fb.innerHTML = `¡Correcto! Tu resultado (${val}) coincide con la solución oficial. Abre el "Paso a Paso" para ver todos los apartados.`;
+            } else {
+                fb.className = "text-xs text-rose-400 font-medium";
+                fb.innerHTML = `No coincide (valor esperado aprox: ${target}). Revisa las unidades (m, mm², A) o pulsa "Ver Paso a Paso".`;
+            }
+        }
+
+        function toggleSingleSolution(num) {
+            const box = document.getElementById('sol-box-' + num);
+            box.classList.toggle('hidden');
+        }
+
+        function toggleAllSolutions(show) {
+            PDF_EXERCISES.forEach(ex => {
+                const box = document.getElementById('sol-box-' + ex.num);
+                if (show) box.classList.remove('hidden');
+                else box.classList.add('hidden');
+            });
+        }
+
+        // =========================================================================
+        // INICIALIZACIÓN AL CARGAR LA VENTANA
+        // =========================================================================
+        window.onload = function () {
+            updateWireSim();
+            updateCDTSim();
+            updateSPSim();
+            updateDivisorSim();
+            updateWheatstoneSim();
+            initColorCalculator();
+            updateCapSim();
+            renderExercises();
+        };
+    </script>
+</body>
+
+</html>
